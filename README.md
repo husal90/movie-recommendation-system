@@ -99,7 +99,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👤 Author
 
-Your Name
 - GitHub: [@husal90](https://github.com/husal90)
 
 ## 🙏 Acknowledgments
