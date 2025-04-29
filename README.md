@@ -2,8 +2,6 @@
 
 A simple, standalone movie recommendation system built with HTML, JavaScript, and Tailwind CSS. This application demonstrates core recommendation algorithms without requiring any server setup, database, or build process.
 
-![Movie Recommendation System Screenshot](https://via.placeholder.com/800x450)
-
 ## 🎬 Features
 
 - **Content-based filtering algorithm** that recommends movies based on genre preferences
