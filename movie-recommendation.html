@@ -1,328 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Recommendation System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Movie Recommender</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
 </head>
-<body class="bg-gray-100">
-    <div id="app" class="p-6 max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold mb-6 text-center">Movie Recommendation System</h1>
-        
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-2">How It Works</h2>
-            <p class="mb-4">This recommendation system uses both content-based filtering (analyzing movie genres) and collaborative filtering concepts to suggest movies you might enjoy. Like some movies to get personalized recommendations!</p>
-            
-            <div class="bg-blue-50 p-4 rounded-lg">
-                <h3 class="font-medium mb-1">Recommendation Algorithm:</h3>
-                <ul class="list-disc pl-5">
-                    <li>Analyzes the genres of movies you like</li>
-                    <li>Weighs genres by how frequently they appear in your likes</li>
-                    <li>Scores unwatched movies based on genre similarity (70%) and rating (30%)</li>
-                    <li>Recommends the highest-scoring movies</li>
-                </ul>
-            </div>
+<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen text-gray-800 font-sans flex flex-col">
+  <div id="app" class="max-w-7xl mx-auto p-6 flex-grow">
+    <header class="mb-10 text-center">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">🎬 Movie Recommender</h1>
+      <p class="text-lg text-gray-600">Get personalized suggestions based on your preferences.</p>
+    </header>
+
+    <section class="mb-12">
+      <div class="bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-2xl font-semibold mb-4">How It Works</h2>
+        <p class="mb-4 text-gray-700">We use a hybrid of content-based and collaborative filtering to generate recommendations based on what you like.</p>
+        <ul class="list-disc pl-6 text-gray-700 space-y-1">
+          <li>Genres you like are weighted and analyzed</li>
+          <li>Movies are scored by similarity (70%) and rating (30%)</li>
+          <li>Top results are recommended just for you</li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Available Movies -->
+      <div>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Browse Movies</h2>
+          <select id="genre-select" class="border border-gray-300 rounded-lg px-3 py-2 bg-white shadow-sm"></select>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Left column: Movie selection -->
-            <div>
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">Available Movies</h2>
-                    <select 
-                        id="genre-select"
-                        class="border rounded p-2"
-                    >
-                        <!-- Will be populated by JavaScript -->
-                    </select>
-                </div>
-                
-                <div id="available-movies" class="bg-white border rounded-lg shadow overflow-hidden">
-                    <!-- Will be populated by JavaScript -->
-                </div>
-            </div>
-            
-            <!-- Right column: Liked movies and recommendations -->
-            <div>
-                <!-- Liked movies section -->
-                <h2 class="text-xl font-semibold mb-4">Movies You Liked</h2>
-                <div id="liked-movies" class="bg-white border rounded-lg shadow overflow-hidden mb-6">
-                    <div class="p-4 text-center text-gray-500">
-                        Like some movies to see your selections here
-                    </div>
-                </div>
-                
-                <!-- Recommendations section -->
-                <h2 class="text-xl font-semibold mb-4">Recommended For You</h2>
-                <div id="recommendations" class="bg-white border rounded-lg shadow overflow-hidden">
-                    <div class="p-4 text-center text-gray-500">
-                        Like some movies to get recommendations
-                    </div>
-                </div>
-            </div>
+        <div id="available-movies" class="bg-white rounded-xl shadow-md divide-y"></div>
+      </div>
+
+      <!-- Likes & Recommendations -->
+      <div>
+        <h2 class="text-xl font-semibold mb-4">Your Liked Movies</h2>
+        <div id="liked-movies" class="bg-white rounded-xl shadow-md divide-y mb-8 p-4 min-h-[100px] text-gray-500 text-center">
+          Like movies to see them here.
         </div>
+
+        <h2 class="text-xl font-semibold mb-4">Recommended For You</h2>
+        <div id="recommendations" class="bg-white rounded-xl shadow-md divide-y p-4 min-h-[100px] text-gray-500 text-center">
+          Like movies to get personalized recommendations.
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // Sample movie database with genres and ratings
-        const movieDatabase = [
-            { id: 1, title: "The Shawshank Redemption", year: 1994, genres: ["Drama"], rating: 9.3 },
-            { id: 2, title: "The Godfather", year: 1972, genres: ["Crime", "Drama"], rating: 9.2 },
-            { id: 3, title: "Pulp Fiction", year: 1994, genres: ["Crime", "Drama"], rating: 8.9 },
-            { id: 4, title: "The Dark Knight", year: 2008, genres: ["Action", "Crime", "Drama"], rating: 9.0 },
-            { id: 5, title: "Fight Club", year: 1999, genres: ["Drama"], rating: 8.8 },
-            { id: 6, title: "Inception", year: 2010, genres: ["Action", "Adventure", "Sci-Fi"], rating: 8.8 },
-            { id: 7, title: "The Matrix", year: 1999, genres: ["Action", "Sci-Fi"], rating: 8.7 },
-            { id: 8, title: "Goodfellas", year: 1990, genres: ["Biography", "Crime", "Drama"], rating: 8.7 },
-            { id: 9, title: "Interstellar", year: 2014, genres: ["Adventure", "Drama", "Sci-Fi"], rating: 8.6 },
-            { id: 10, title: "The Silence of the Lambs", year: 1991, genres: ["Crime", "Drama", "Thriller"], rating: 8.6 },
-            { id: 11, title: "Jurassic Park", year: 1993, genres: ["Adventure", "Sci-Fi", "Thriller"], rating: 8.1 },
-            { id: 12, title: "Toy Story", year: 1995, genres: ["Animation", "Adventure", "Comedy"], rating: 8.3 },
-            { id: 13, title: "Avatar", year: 2009, genres: ["Action", "Adventure", "Fantasy"], rating: 7.8 },
-            { id: 14, title: "Titanic", year: 1997, genres: ["Drama", "Romance"], rating: 7.9 },
-            { id: 15, title: "The Lion King", year: 1994, genres: ["Animation", "Adventure", "Drama"], rating: 8.5 },
-            { id: 16, title: "Forrest Gump", year: 1994, genres: ["Drama", "Romance"], rating: 8.8 },
-            { id: 17, title: "The Lord of the Rings: The Fellowship of the Ring", year: 2001, genres: ["Adventure", "Drama", "Fantasy"], rating: 8.8 },
-            { id: 18, title: "Star Wars: Episode IV - A New Hope", year: 1977, genres: ["Action", "Adventure", "Fantasy"], rating: 8.6 },
-            { id: 19, title: "The Avengers", year: 2012, genres: ["Action", "Adventure", "Sci-Fi"], rating: 8.0 },
-            { id: 20, title: "The Green Mile", year: 1999, genres: ["Crime", "Drama", "Fantasy"], rating: 8.6 }
-        ];
+  <!-- Footer -->
+  <footer class="text-center text-sm text-gray-500 py-4 mt-12">
+    &copy; 2025 Alexander Huseby. All rights reserved.
+  </footer>
 
-        // App state
-        let likedMovies = [];
-        let availableMovies = [...movieDatabase];
-        let recommendations = [];
-        let selectedGenre = 'All';
+  <!-- JavaScript -->
+  <script>
+    const movieDatabase = [
+      { id: 1, title: "The Shawshank Redemption", year: 1994, genres: ["Drama"], rating: 9.3 },
+      { id: 2, title: "The Godfather", year: 1972, genres: ["Crime", "Drama"], rating: 9.2 },
+      { id: 3, title: "Pulp Fiction", year: 1994, genres: ["Crime", "Drama"], rating: 8.9 },
+      { id: 4, title: "The Dark Knight", year: 2008, genres: ["Action", "Crime", "Drama"], rating: 9.0 },
+      { id: 5, title: "Fight Club", year: 1999, genres: ["Drama"], rating: 8.8 },
+      { id: 6, title: "Inception", year: 2010, genres: ["Action", "Adventure", "Sci-Fi"], rating: 8.8 },
+      { id: 7, title: "The Matrix", year: 1999, genres: ["Action", "Sci-Fi"], rating: 8.7 },
+      { id: 8, title: "Goodfellas", year: 1990, genres: ["Biography", "Crime", "Drama"], rating: 8.7 },
+      { id: 9, title: "Interstellar", year: 2014, genres: ["Adventure", "Drama", "Sci-Fi"], rating: 8.6 },
+      { id: 10, title: "The Silence of the Lambs", year: 1991, genres: ["Crime", "Drama", "Thriller"], rating: 8.6 },
+      { id: 11, title: "Jurassic Park", year: 1993, genres: ["Adventure", "Sci-Fi", "Thriller"], rating: 8.1 },
+      { id: 12, title: "Toy Story", year: 1995, genres: ["Animation", "Adventure", "Comedy"], rating: 8.3 },
+      { id: 13, title: "Avatar", year: 2009, genres: ["Action", "Adventure", "Fantasy"], rating: 7.8 },
+      { id: 14, title: "Titanic", year: 1997, genres: ["Drama", "Romance"], rating: 7.9 },
+      { id: 15, title: "The Lion King", year: 1994, genres: ["Animation", "Adventure", "Drama"], rating: 8.5 },
+      { id: 16, title: "Forrest Gump", year: 1994, genres: ["Drama", "Romance"], rating: 8.8 },
+      { id: 17, title: "The Lord of the Rings: The Fellowship of the Ring", year: 2001, genres: ["Adventure", "Drama", "Fantasy"], rating: 8.8 },
+      { id: 18, title: "Star Wars: Episode IV - A New Hope", year: 1977, genres: ["Action", "Adventure", "Fantasy"], rating: 8.6 },
+      { id: 19, title: "The Avengers", year: 2012, genres: ["Action", "Adventure", "Sci-Fi"], rating: 8.0 },
+      { id: 20, title: "The Green Mile", year: 1999, genres: ["Crime", "Drama", "Fantasy"], rating: 8.6 }
+    ];
+    let likedMovies = [];
+    let availableMovies = [...movieDatabase];
+    let recommendations = [];
+    let selectedGenre = 'All';
 
-        // Extract all unique genres from database
-        const allGenres = ['All', ...new Set(movieDatabase.flatMap(movie => movie.genres))].sort();
+    const genreSelect = document.getElementById('genre-select');
+    const availableMoviesContainer = document.getElementById('available-movies');
+    const likedMoviesContainer = document.getElementById('liked-movies');
+    const recommendationsContainer = document.getElementById('recommendations');
 
-        // DOM elements
-        const genreSelect = document.getElementById('genre-select');
-        const availableMoviesContainer = document.getElementById('available-movies');
-        const likedMoviesContainer = document.getElementById('liked-movies');
-        const recommendationsContainer = document.getElementById('recommendations');
+    const allGenres = ['All', ...new Set(movieDatabase.flatMap(m => m.genres))].sort();
 
-        // Initialize the app
-        function initApp() {
-            // Populate genre dropdown
-            allGenres.forEach(genre => {
-                const option = document.createElement('option');
-                option.value = genre;
-                option.textContent = genre;
-                genreSelect.appendChild(option);
-            });
+    function initApp() {
+      allGenres.forEach(genre => {
+        const option = document.createElement('option');
+        option.value = genre;
+        option.textContent = genre;
+        genreSelect.appendChild(option);
+      });
 
-            // Set up event listener for genre selection
-            genreSelect.addEventListener('change', (e) => {
-                selectedGenre = e.target.value;
-                updateAvailableMovies();
-            });
+      genreSelect.addEventListener('change', (e) => {
+        selectedGenre = e.target.value;
+        updateAvailableMovies();
+      });
 
-            // Initial render
-            updateAvailableMovies();
-        }
+      updateAvailableMovies();
+    }
 
-        // Generate recommendations based on collaborative filtering and content-based filtering
-        function generateRecommendations() {
-            if (likedMovies.length === 0) return [];
-            
-            // Content-based filtering: Recommend movies with similar genres
-            const likedGenres = _.countBy(likedMovies.flatMap(movie => movie.genres));
-            
-            // Calculate a score for each movie based on genre overlap and rating
-            const scoredMovies = movieDatabase
-                .filter(movie => !likedMovies.some(m => m.id === movie.id))
-                .map(movie => {
-                    // Genre similarity score
-                    let genreScore = movie.genres.reduce((score, genre) => {
-                        return score + (likedGenres[genre] || 0);
-                    }, 0) / movie.genres.length;
-                    
-                    // Normalize genre score (0-1)
-                    const maxGenreScore = Math.max(...Object.values(likedGenres));
-                    genreScore = genreScore / maxGenreScore;
-                    
-                    // Rating score (normalized to 0-1)
-                    const ratingScore = movie.rating / 10;
-                    
-                    // Combined score (70% genre similarity, 30% rating)
-                    const totalScore = (genreScore * 0.7) + (ratingScore * 0.3);
-                    
-                    return {
-                        ...movie,
-                        score: totalScore
-                    };
-                });
-            
-            // Sort by score and take top 5
-            return _.orderBy(scoredMovies, ['score'], ['desc']).slice(0, 5);
-        }
+    function updateAvailableMovies() {
+      if (selectedGenre === 'All') {
+        availableMovies = movieDatabase.filter(movie => !likedMovies.includes(movie));
+      } else {
+        availableMovies = movieDatabase.filter(
+          movie => movie.genres.includes(selectedGenre) && !likedMovies.includes(movie)
+        );
+      }
+      renderAvailableMovies();
+    }
 
-        // Update available movies based on selected genre
-        function updateAvailableMovies() {
-            if (selectedGenre === 'All') {
-                availableMovies = movieDatabase.filter(movie => !likedMovies.some(m => m.id === movie.id));
-            } else {
-                availableMovies = movieDatabase.filter(
-                    movie => 
-                        movie.genres.includes(selectedGenre) && 
-                        !likedMovies.some(m => m.id === movie.id)
-                );
-            }
-            renderAvailableMovies();
-        }
+    function renderAvailableMovies() {
+      availableMoviesContainer.innerHTML = '';
+      if (availableMovies.length === 0) {
+        availableMoviesContainer.innerHTML = `<div class="p-4 text-center text-gray-500">No more movies${selectedGenre !== 'All' ? ` in ${selectedGenre}` : ''}.</div>`;
+        return;
+      }
 
-        // Render available movies
-        function renderAvailableMovies() {
-            availableMoviesContainer.innerHTML = '';
-            
-            if (availableMovies.length === 0) {
-                availableMoviesContainer.innerHTML = `
-                    <div class="p-4 text-center text-gray-500">
-                        ${selectedGenre === 'All' 
-                            ? "No more movies available" 
-                            : `No more ${selectedGenre} movies available`}
-                    </div>
-                `;
-                return;
-            }
-            
-            availableMovies.forEach(movie => {
-                const movieEl = document.createElement('div');
-                movieEl.className = 'border-b p-3 flex justify-between items-center';
-                movieEl.innerHTML = `
-                    <div>
-                        <h3 class="font-medium">${movie.title} (${movie.year})</h3>
-                        <div class="text-sm text-gray-600">
-                            <span class="mr-2">Rating: ${movie.rating}/10</span>
-                            <span>${movie.genres.join(', ')}</span>
-                        </div>
-                    </div>
-                    <button 
-                        class="like-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                        data-id="${movie.id}"
-                    >
-                        Like
-                    </button>
-                `;
-                availableMoviesContainer.appendChild(movieEl);
-            });
-            
-            // Add event listeners to like buttons
-            document.querySelectorAll('.like-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const movieId = parseInt(btn.getAttribute('data-id'));
-                    handleLikeMovie(movieId);
-                });
-            });
-        }
+      availableMovies.forEach(movie => {
+        const el = document.createElement('div');
+        el.className = 'p-4 flex justify-between items-center hover:bg-gray-50 transition';
+        el.innerHTML = `
+          <div>
+            <h3 class="font-semibold">${movie.title} (${movie.year})</h3>
+            <p class="text-sm text-gray-600">${movie.genres.join(', ')} · Rating: ${movie.rating}/10</p>
+          </div>
+          <button class="like-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded" data-id="${movie.id}">Like</button>
+        `;
+        availableMoviesContainer.appendChild(el);
+      });
 
-        // Render liked movies
-        function renderLikedMovies() {
-            likedMoviesContainer.innerHTML = '';
-            
-            if (likedMovies.length === 0) {
-                likedMoviesContainer.innerHTML = `
-                    <div class="p-4 text-center text-gray-500">
-                        Like some movies to see your selections here
-                    </div>
-                `;
-                return;
-            }
-            
-            likedMovies.forEach(movie => {
-                const movieEl = document.createElement('div');
-                movieEl.className = 'border-b p-3 flex justify-between items-center';
-                movieEl.innerHTML = `
-                    <div>
-                        <h3 class="font-medium">${movie.title} (${movie.year})</h3>
-                        <div class="text-sm text-gray-600">
-                            <span>${movie.genres.join(', ')}</span>
-                        </div>
-                    </div>
-                    <button 
-                        class="remove-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                        data-id="${movie.id}"
-                    >
-                        Remove
-                    </button>
-                `;
-                likedMoviesContainer.appendChild(movieEl);
-            });
-            
-            // Add event listeners to remove buttons
-            document.querySelectorAll('.remove-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const movieId = parseInt(btn.getAttribute('data-id'));
-                    handleRemoveLiked(movieId);
-                });
-            });
-        }
+      document.querySelectorAll('.like-btn').forEach(btn =>
+        btn.addEventListener('click', () => handleLikeMovie(+btn.dataset.id))
+      );
+    }
 
-        // Render recommendations
-        function renderRecommendations() {
-            recommendationsContainer.innerHTML = '';
-            
-            if (recommendations.length === 0) {
-                recommendationsContainer.innerHTML = `
-                    <div class="p-4 text-center text-gray-500">
-                        ${likedMovies.length > 0 
-                            ? "No recommendations available" 
-                            : "Like some movies to get recommendations"}
-                    </div>
-                `;
-                return;
-            }
-            
-            recommendations.forEach(movie => {
-                const movieEl = document.createElement('div');
-                movieEl.className = 'border-b p-3';
-                movieEl.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-medium">${movie.title} (${movie.year})</h3>
-                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
-                            ${(movie.score * 100).toFixed(0)}% match
-                        </span>
-                    </div>
-                    <div class="text-sm text-gray-600">
-                        <span class="mr-2">Rating: ${movie.rating}/10</span>
-                        <span>${movie.genres.join(', ')}</span>
-                    </div>
-                `;
-                recommendationsContainer.appendChild(movieEl);
-            });
-        }
+    function handleLikeMovie(id) {
+      const movie = movieDatabase.find(m => m.id === id);
+      if (movie && !likedMovies.includes(movie)) {
+        likedMovies.push(movie);
+        updateAvailableMovies();
+        renderLikedMovies();
+        updateRecommendations();
+      }
+    }
 
-        // Handle liking a movie
-        function handleLikeMovie(movieId) {
-            const movie = availableMovies.find(m => m.id === movieId);
-            if (movie) {
-                likedMovies.push(movie);
-                updateAvailableMovies();
-                renderLikedMovies();
-                updateRecommendations();
-            }
-        }
+    function handleRemoveLiked(id) {
+      likedMovies = likedMovies.filter(m => m.id !== id);
+      updateAvailableMovies();
+      renderLikedMovies();
+      updateRecommendations();
+    }
 
-        // Handle removing a liked movie
-        function handleRemoveLiked(movieId) {
-            likedMovies = likedMovies.filter(m => m.id !== movieId);
-            updateAvailableMovies();
-            renderLikedMovies();
-            updateRecommendations();
-        }
+    function renderLikedMovies() {
+      likedMoviesContainer.innerHTML = likedMovies.length === 0
+        ? '<p class="text-gray-500">Like movies to see them here.</p>'
+        : '';
 
-        // Update recommendations
-        function updateRecommendations() {
-            recommendations = generateRecommendations();
-            renderRecommendations();
-        }
+      likedMovies.forEach(movie => {
+        const el = document.createElement('div');
+        el.className = 'p-4 flex justify-between items-center hover:bg-gray-50 transition';
+        el.innerHTML = `
+          <div>
+            <h3 class="font-semibold">${movie.title} (${movie.year})</h3>
+            <p class="text-sm text-gray-600">${movie.genres.join(', ')}</p>
+          </div>
+          <button class="remove-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" data-id="${movie.id}">Remove</button>
+        `;
+        likedMoviesContainer.appendChild(el);
+      });
 
-        // Initialize the app when the DOM is fully loaded
-        document.addEventListener('DOMContentLoaded', initApp);
-    </script>
+      document.querySelectorAll('.remove-btn').forEach(btn =>
+        btn.addEventListener('click', () => handleRemoveLiked(+btn.dataset.id))
+      );
+    }
+
+    function generateRecommendations() {
+      if (likedMovies.length === 0) return [];
+
+      const genreCount = _.countBy(likedMovies.flatMap(m => m.genres));
+      const maxGenreScore = Math.max(...Object.values(genreCount));
+
+      return movieDatabase
+        .filter(m => !likedMovies.includes(m))
+        .map(m => {
+          const genreScore = m.genres.reduce((acc, genre) => acc + (genreCount[genre] || 0), 0) / m.genres.length;
+          const normalizedGenreScore = genreScore / (maxGenreScore || 1);
+          const ratingScore = m.rating / 10;
+          const finalScore = normalizedGenreScore * 0.7 + ratingScore * 0.3;
+          return { ...m, score: finalScore };
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+    }
+
+    function renderRecommendations() {
+      recommendationsContainer.innerHTML = recommendations.length === 0
+        ? '<p class="text-gray-500">Like movies to get personalized recommendations.</p>'
+        : '';
+
+      recommendations.forEach(movie => {
+        const el = document.createElement('div');
+        el.className = 'p-4 hover:bg-gray-50 transition';
+        el.innerHTML = `
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold">${movie.title} (${movie.year})</h3>
+            <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">${(movie.score * 100).toFixed(0)}% match</span>
+          </div>
+          <p class="text-sm text-gray-600">${movie.genres.join(', ')} · Rating: ${movie.rating}/10</p>
+        `;
+        recommendationsContainer.appendChild(el);
+      });
+    }
+
+    function updateRecommendations() {
+      recommendations = generateRecommendations();
+      renderRecommendations();
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
 </body>
 </html>
